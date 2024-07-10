@@ -24,7 +24,9 @@ This package is in alpha status, currently being developed and subject to major 
 
 ### Initialize API connection
 
-You can find your API key and org on your Clarity.io user profile.
+Find your API key and org in your Clarity.io user profile.  Log in at https://dashboard.clarity.io, then click the person icon on the top-right corner.
+
+Use these values to initialize a connection:
 
 ```python
 import clarityio
