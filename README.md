@@ -20,6 +20,13 @@ This package is in alpha status, currently being developed and subject to major 
 - All other endpoints.
 
 
+## Installation
+
+Install from PyPI:
+```
+pip install clarityio
+```
+
 ## Usage
 
 ### Initialize API connection
