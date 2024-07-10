@@ -9,12 +9,16 @@ class ClarityAPIConnection:
             "Accept-Encoding": "gzip, deflate, br",
             "x-api-key": self.api_key
         }
+    
     def get_recent_measurements(self, data=None):
         endpoint = 'recent-datasource-measurements-query'
         url = f"{self.base_url}{endpoint}"
         if data is None:
+            print('No parameters provided, fetching hourly measurements for all datasources using API defaults.')
             data = {}
-        data['org'] = self.org  # Ensure 'org' is always included in the data
+            data['allDatasources'] = True
+            data['outputFrequency'] = 'hour' # API v2 docs say this should be a default value but requests fails w/o it
+        data['org'] = self.org
         try:
             response = requests.post(url, headers=self.headers, json=data)
             response.raise_for_status()  # Raises an HTTPError if the response status code is 4XX/5XX
@@ -23,6 +27,7 @@ class ClarityAPIConnection:
             print(f"HTTP error occurred: {err}")
         except Exception as err:
             print(f"An error occurred: {err}")
+    
     def get_datasources(self):
         """
         Fetches datasources for the organization using a GET request.
@@ -40,6 +45,7 @@ class ClarityAPIConnection:
             print(f"HTTP error occurred: {err}")
         except Exception as err:
             print(f"An error occurred: {err}")
+    
     def get_datasource_details(self, datasourceId):
         """
         Fetches details for a specific datasource using its ID and includes the organization in the query parameters.
