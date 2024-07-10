@@ -1,0 +1,25 @@
+[project]
+name = "clarityio"
+version = "0.1.0"
+description = "Retrieve air quality data from the Clarity.io API"
+authors = [
+  { name="Sam Firke", email="samuel.firke@gmail.com" },
+]
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+  "requests>=2.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/a2gov/clarityio"
+Issues = "https://github.com/a2gov/clarityio/issues"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
