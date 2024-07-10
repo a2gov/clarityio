@@ -31,7 +31,7 @@ Use these values to initialize a connection:
 ```python
 import clarityio
 import pandas as pd
-api_connection = clarityio.ClarityAPIConnection(api_key="YOUR_API_KEY", org="YOUR_ORG")
+api_connection = clarityio.ClarityAPIConnection(api_key='YOUR_API_KEY', org='YOUR_ORG')
 ```
 
 ### Retrieve recent measurements
@@ -41,9 +41,9 @@ See API docs for valid arguments to pass, e.g., retrieve daily data instead of h
 ```python
 request_body = { # the required value for 'org' is automatically passed from the connection object
         'allDatasources': True,
-        'outputFrequency': "hour",
-        'format': "json-long",
-        'startTime': "2024-07-05T00:00:00Z"
+        'outputFrequency': 'hour',
+        'format': 'json-long',
+        'startTime': '2024-07-05T00:00:00Z'
 }
 response = api_connection.get_recent_measurements(data=request_body)
 df = pd.DataFrame(response['data'])
