@@ -40,15 +40,16 @@ import clarityio
 import pandas as pd
 api_connection = clarityio.ClarityAPIConnection(api_key='YOUR_API_KEY', org='YOUR_ORG')
 ```
+Both of these values are required to make calls to the Clarity API and are appended as needed by this package.
 
 ### Retrieve recent measurements
 
-See API docs for valid arguments to pass, e.g., retrieve daily data instead of hourly.
+See API docs for valid arguments to pass, e.g., retrieve daily data instead of hourly.  
 
 The default value of `format` is `json-long`, which returns the data in long format (one row per combination of metric and time).  Here is such a call:
 
 ```python
-request_body = { # the required value for 'org' is automatically passed from the connection object
+request_body = {
         'allDatasources': True,
         'outputFrequency': 'hour',
         'format': 'json-long',
