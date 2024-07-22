@@ -43,18 +43,35 @@ api_connection = clarityio.ClarityAPIConnection(api_key='YOUR_API_KEY', org='YOU
 
 ### Retrieve recent measurements
 
-See API docs for valid arguments to pass, e.g., retrieve daily data instead of hourly, or in CSV format instead of JSON.
+See API docs for valid arguments to pass, e.g., retrieve daily data instead of hourly.
+
+The default value of `format` is `json-long`, which returns the data in long format (one row per combination of metric and time).  Here is such a call:
 
 ```python
 request_body = { # the required value for 'org' is automatically passed from the connection object
         'allDatasources': True,
         'outputFrequency': 'hour',
         'format': 'json-long',
-        'startTime': '2024-07-05T00:00:00Z'
+        'startTime': '2024-07-22T00:00:00Z'
 }
 response = api_connection.get_recent_measurements(data=request_body)
 df = pd.DataFrame(response['data'])
 ```
+
+To get the data in wide format, with one row per timestamp and each metric in its own column, use the `csv-wide` format option and convert to a pandas dataframe:
+
+```python
+request_body = {
+        'allDatasources': True,
+        'outputFrequency': 'hour',
+        'format': 'csv-wide',
+        'metricSelect': 'only pm2_5ConcMass24HourRollingMean' # see API docs for how to specify specific variables
+}
+response_wide = api_connection.get_recent_measurements(data=request_body)
+from io import StringIO
+df_wide = pd.read_csv(StringIO(response_wide), sep=",")
+```
+
 ### List data sources
 ```python
 datasources_response = api_connection.get_datasources()

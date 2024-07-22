@@ -1,4 +1,5 @@
 import requests
+import copy
 
 class ClarityAPIConnection:
     def __init__(self, api_key, org):
@@ -16,17 +17,23 @@ class ClarityAPIConnection:
         if data is None:
             print('No parameters provided, fetching hourly measurements for all datasources using API defaults.')
             data = {}
-            data['allDatasources'] = True
-            data['outputFrequency'] = 'hour' # API v2 docs say this should be a default value but requests fails w/o it
+            data = {'allDatasources': True, 'outputFrequency': 'hour'} # API v2 docs say outputFrequency should be 'hour' by default but requests fail if it is not specified
+        else:
+            data = copy.deepcopy(data)
         data['org'] = self.org
         try:
             response = requests.post(url, headers=self.headers, json=data)
             response.raise_for_status()  # Raises an HTTPError if the response status code is 4XX/5XX
-            return response.json()
         except requests.exceptions.HTTPError as err:
             print(f"HTTP error occurred: {err}")
+            return None
         except Exception as err:
             print(f"An error occurred: {err}")
+            return None
+        if data.get('format') == 'csv-wide':
+            return response.text
+        else:
+            return response.json()
     
     def get_datasources(self):
         """

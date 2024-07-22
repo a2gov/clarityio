@@ -1,6 +1,6 @@
 [project]
 name = "clarityio"
-version = "0.1.0"
+version = "0.2.0"
 description = "Retrieve air quality data from the Clarity.io API"
 authors = [
   { name="Sam Firke", email="samuel.firke@gmail.com" },
