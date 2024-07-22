@@ -65,7 +65,7 @@ request_body = {
         'allDatasources': True,
         'outputFrequency': 'hour',
         'format': 'csv-wide',
-        'metricSelect': 'only pm2_5ConcMass24HourRollingMean' # see API docs for how to specify specific variables
+        'metricSelect': 'only pm2_5ConcMass24HourRollingMean' # Refer to API documentation for metric selection
 }
 response_wide = api_connection.get_recent_measurements(data=request_body)
 from io import StringIO
