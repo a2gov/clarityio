@@ -24,6 +24,7 @@ def scale_raw_to_aqi(pollutant, value):
     though PM2.5 changed in 2024: https://www.epa.gov/system/files/documents/2024-02/pm-naaqs-air-quality-index-fact-sheet.pdf
 
     """
+    
     cutoffs = {
     'pm10_24hr': [
         (54, 0, 50, 0),
@@ -86,10 +87,12 @@ def scale_raw_to_aqi(pollutant, value):
         return value.apply(lambda x: scale_raw_to_aqi(pollutant, x))
     if value is None or np.isnan(value):
         return np.nan
+    elif value < 0:
+        raise ValueError("Negative pollutant values are invalid.")
     if pollutant not in cutoffs:
         raise ValueError(f"Unknown pollutant: {pollutant}")
     for cutoff, low, high, base in cutoffs[pollutant]:
         if value <= cutoff:
             return (high - base) / (cutoff - low) * (value - low) + base
-    warnings.warn(f"Pollutant value {value} is off the scale for {pollutant}")
+    warnings.warn(f"Pollutant value {value} is off the scale for {pollutant}, returning maximum scaled value of {cutoffs[pollutant][-1][2]}.")
     return cutoffs[pollutant][-1][2]
