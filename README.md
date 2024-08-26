@@ -1,11 +1,11 @@
 # clarityio
 
-This package wraps the API for Clarity air quality sensors.  It makes calls to [v2 of the API](https://api-guide.clarity.io/), which as of July 2024 is the newest version of the API.
+This package wraps the API for Clarity air quality sensors.  It makes calls to [v2 of the API](https://api-guide.clarity.io/), which as of August 2024 is the newest version of the API.
 
 
 ## Development status
 
-This package is in alpha status, currently being developed and subject to major changes. 
+This package is in beta status.  Some functionality is still missing, but it is being used in production at the City of Ann Arbor. 
 
 ### Implemented endpoints
 
@@ -85,4 +85,12 @@ Obtain the IDs from the prior block of code.
 ```python
 source_details_response = api_connection.get_datasource_details('A_DATA_SOURCE_ID')
 source_details = pd.json_normalize(source_details_response['datasource'])
+```
+
+### Convert a raw measurement to the EPA AQI scale
+
+The Clarity API provides some of these values, but this utility function offers more flexibility for custom data processing.
+```python
+clarityio.scale_raw_to_aqi('pm2.5_24hr', 18.84) # 69.14676806083651
+clarityio.scale_raw_to_aqi('nitrogen_dioxide_1hr', 300) # 138.64864864864865
 ```
