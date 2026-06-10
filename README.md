@@ -1,22 +1,22 @@
 # clarityio
 
-This package wraps the API for Clarity air quality sensors.  It makes calls to [v2 of the API](https://api-guide.clarity.io/), which as of August 2024 is the newest version of the API.
+This package wraps the API for Clarity air quality sensors.  It makes calls to [v2 of the API](https://api-guide.clarity.io/), which as of June 2026 is the newest version of the API.
 
 
 ## Development status
 
-This package is in beta status.  Some functionality is still missing, but it is being used in production at the City of Ann Arbor. 
+This package is stable and used in production at the City of Ann Arbor.
 
 ### Implemented endpoints
 
-- Recent measurements: `POST {baseUrl}/v2/recent-datasource-measurements-query `
-- Per-Org Datasources summary: `GET {baseURl}/v2/datasources`
-- Per-Datasource details: `GET {baseURl}/v2/datasources/:datasourceId `
+- Recent measurements: `POST {baseUrl}/v2/recent-datasource-measurements-query`
+- Recent measurements continuation: `POST {baseUrl}/v2/recent-datasource-measurements-continuation`
+- Historical measurements: `POST {baseUrl}/v2/report-requests`
+- Per-Org Datasources summary: `GET {baseUrl}/v2/datasources`
+- Per-Datasource details: `GET {baseUrl}/v2/datasources/:datasourceId`
 
 ### Not yet implemented
 
-- Continuations
-- Historical measurements
 - All other endpoints.
 
 
@@ -44,34 +44,46 @@ Both of these values are required to make calls to the Clarity API and are appen
 
 ### Retrieve recent measurements
 
-See API docs for valid arguments to pass, e.g., retrieve daily data instead of hourly.  
+The API limits how far back this endpoint can look (e.g., 48 hours for hourly data). For older data or bounded time windows, use `get_historical_measurements()` instead.
 
-The default value of `format` is `json-long`, which returns the data in long format (one row per combination of metric and time).  Here is such a call:
+The default `format` is `json-long`, which returns one row per combination of metric and time:
 
 ```python
-request_body = {
-        'allDatasources': True,
-        'outputFrequency': 'hour',
-        'format': 'json-long',
-        'startTime': '2024-07-22T00:00:00Z'
-}
-response = api_connection.get_recent_measurements(data=request_body)
+response = api_connection.get_recent_measurements(
+    all_datasources=True,
+    output_frequency='hour',
+    start_time='2024-07-22T00:00:00Z',
+)
 df = pd.DataFrame(response['data'])
 ```
 
-To get the data in wide format, with one row per timestamp and each metric in its own column, use the `csv-wide` format option and convert to a pandas dataframe:
+To get wide format (one row per timestamp, each metric in its own column):
 
 ```python
-request_body = {
-        'allDatasources': True,
-        'outputFrequency': 'hour',
-        'format': 'csv-wide',
-        'metricSelect': 'only pm2_5ConcMass24HourRollingMean' # Refer to API documentation for metric selection
-}
-response_wide = api_connection.get_recent_measurements(data=request_body)
 from io import StringIO
-df_wide = pd.read_csv(StringIO(response_wide), sep=",")
+response_wide = api_connection.get_recent_measurements(
+    all_datasources=True,
+    output_frequency='hour',
+    format='csv-wide',
+    metric_select='only pm2_5ConcMass24HourRollingMean',  # see API docs for metric selection
+)
+df_wide = pd.read_csv(StringIO(response_wide))
 ```
+
+### Retrieve historical measurements
+
+Use this for arbitrary date ranges or data older than the recent-measurements lookback limits. The method submits an async report, polls until ready, and returns a wide-format DataFrame. Note that the API allows **30 reports per org per day**.
+
+```python
+df = api_connection.get_historical_measurements(
+    start_time='2024-01-01T00:00:00Z',
+    end_time='2024-01-31T00:00:00Z',
+    all_datasources=True,
+    output_frequency='hour',
+)
+```
+
+The returned DataFrame has one row per datasource/time-period. The timestamp column is `startOfPeriod` and metric columns follow the pattern `{metricName}.value` (e.g. `pm2_5ConcMass1HourMean.value`).
 
 ### List data sources
 ```python
