@@ -1,20 +1,25 @@
 [project]
 name = "clarityio"
-version = "1.0.0"
+version = "1.1.0"
 description = "Retrieve air quality data from the Clarity.io API"
 authors = [
   { name="Sam Firke", email="samuel.firke@gmail.com" },
 ]
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 classifiers = [
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "License :: OSI Approved :: Apache Software License",
     "Operating System :: OS Independent",
 ]
 dependencies = [
   "requests>=2.0.0",
-  "pandas>=1.0.0",
+  "pandas>=2.0",
 ]
 
 [project.optional-dependencies]

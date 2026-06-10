@@ -92,6 +92,42 @@ def test_get_recent_with_continuation_token(mock_post, conn):
 
 
 @patch("clarityio.clarityio.requests.post")
+def test_get_recent_datetime_start_time_is_isoformatted(mock_post, conn):
+    from datetime import datetime, timezone
+
+    mock_post.return_value = _mock_post({"data": []})
+    conn.get_recent_measurements(
+        start_time=datetime(2024, 4, 1, 12, 30, tzinfo=timezone.utc)
+    )
+    body = mock_post.call_args[1]["json"]
+    assert body["startTime"] == "2024-04-01T12:30:00+00:00"
+
+
+@patch("clarityio.clarityio.requests.post")
+def test_get_recent_optional_params_added_to_body(mock_post, conn):
+    mock_post.return_value = _mock_post({"data": []})
+    conn.get_recent_measurements(
+        metric_select="only pm2_5ConcMass24HourRollingMean",
+        qc_assessment=True,
+        qc_flags=True,
+    )
+    body = mock_post.call_args[1]["json"]
+    assert body["metricSelect"] == "only pm2_5ConcMass24HourRollingMean"
+    assert body["qcAssessment"] is True
+    assert body["qcFlags"] is True
+
+
+@patch("clarityio.clarityio.requests.post")
+def test_get_recent_optional_params_omitted_by_default(mock_post, conn):
+    mock_post.return_value = _mock_post({"data": []})
+    conn.get_recent_measurements()
+    body = mock_post.call_args[1]["json"]
+    assert "metricSelect" not in body
+    assert "qcAssessment" not in body
+    assert "qcFlags" not in body
+
+
+@patch("clarityio.clarityio.requests.post")
 def test_get_recent_http_error_returns_none(mock_post, conn):
     mock_post.return_value = _mock_post(status_code=400)
     assert conn.get_recent_measurements() is None
@@ -297,6 +333,32 @@ def test_get_historical_multiple_files_concatenated(mock_post, mock_get, mock_sl
 
     assert len(result) == 2
     assert list(result["value"]) == [1.0, 2.0]
+
+
+@patch("clarityio.clarityio.pd.read_parquet")
+@patch("clarityio.clarityio.time.sleep")
+@patch("clarityio.clarityio.requests.get")
+@patch("clarityio.clarityio.requests.post")
+def test_get_historical_parquet_download(mock_post, mock_get, mock_sleep, mock_read_parquet, conn):
+    mock_post.return_value = _mock_post({"reportId": "rpt-6"})
+    mock_get.side_effect = [
+        _mock_get({"reportStatus": "succeeded", "urls": ["https://example.com/data.parquet"]}),
+        _mock_get(),
+    ]
+    mock_read_parquet.return_value = pd.DataFrame({"value": [1.0]})
+
+    result = conn.get_historical_measurements(
+        start_time="2024-04-01T00:00:00Z",
+        end_time="2024-04-08T00:00:00Z",
+        file_format="parquet",
+    )
+
+    assert isinstance(result, pd.DataFrame)
+    assert list(result["value"]) == [1.0]
+    # Parquet path reads from the response bytes, not text
+    assert mock_read_parquet.called
+    body = mock_post.call_args[1]["json"]
+    assert body["fileFormat"] == "parquet"
 
 
 # ---------------------------------------------------------------------------
