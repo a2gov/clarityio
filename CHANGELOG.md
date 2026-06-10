@@ -2,6 +2,14 @@
 
 <!--next-version-placeholder-->
 
+## v1.0.0 (2026-06-10)
+
+- `get_historical_measurements()` — new method for arbitrary date ranges via the async `POST /v2/report-requests` endpoint. Accepts `start_time` and `end_time`, polls until the report completes, downloads the result, and returns a `pandas.DataFrame`. Both time bounds are fully respected. Rate limit is 30 reports/org/day.
+- `get_measurements_continuation()` — new method for streaming new measurements without time-based race conditions, using the `POST /v2/recent-datasource-measurements-continuation` endpoint. Returns `(data, new_token)` tuples for chained polling.
+- `get_recent_measurements()` redesigned with explicit named parameters replacing the open `data` dict. `datasource_ids` is now passed correctly as a list (`datasourceIds: [...]`), fixing 400 errors on single-datasource queries. The docstring documents the 48-hour (hourly) and 10-day (daily) lookback limits and that `endTime` is not supported by this endpoint.
+- `_get_report_status()` private helper added for debugging report request state.
+- Version bump to 1.0.0.
+
 ## v0.3.1 (2026-06-10)
 
 - Fixed packaging: `pandas` is now correctly declared as a runtime dependency; `pytest` moved to optional `dev` dependency group.
