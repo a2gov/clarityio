@@ -2,12 +2,17 @@
 
 <!--next-version-placeholder-->
 
-## NEXT
+## v1.1.0 (2026-06-10)
 
 ### Improvements
 
 - All HTTP requests now use a connect/read timeout, so a stalled connection
   fails instead of hanging indefinitely.
+
+### Dependencies
+
+- Minimum Python raised to 3.9 (3.8 is end-of-life).
+- Minimum `pandas` raised to 2.0, matching the supported Python range.
 
 ### Internal
 
