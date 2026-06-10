@@ -149,6 +149,18 @@ class ClarityAPIConnection:
 
         Returns:
             Tuple of (data, new_continuation_token), or (None, None) on error.
+
+        Example:
+            # Seed a token from an initial recent-measurements call
+            data, token = conn.get_recent_measurements(
+                datasource_ids=["DS123"], reply_with_continuation_token=True
+            )
+            # On each subsequent poll, pass the latest token to get only new data
+            while True:
+                time.sleep(60)
+                data, token = conn.get_measurements_continuation(token)
+                if data:
+                    process(data)
         """
         url = f"{self.base_url}recent-datasource-measurements-continuation"
         body = {"org": self.org, "continuationToken": continuation_token}
