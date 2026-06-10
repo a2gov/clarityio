@@ -18,7 +18,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=6.0.0", "twine>=5.0.0"]
+dev = ["pytest>=6.0.0", "twine>=5.0.0", "build>=1.0.0"]
 
 [tool.pytest.ini_options]
 pythonpath = [

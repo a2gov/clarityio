@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Setup
 
-`.venv` is inside the repo and gitignored. To recreate: `python3 -m venv .venv && .venv/bin/pip install -e ".[dev]"`
+`.venv` is inside the repo and gitignored. To recreate: `python3 -m venv .venv && .venv/bin/pip install -e ".[dev]"` then `source .venv/bin/activate`.
 
 ## Architecture
 
