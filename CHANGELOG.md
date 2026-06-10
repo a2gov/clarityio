@@ -2,6 +2,30 @@
 
 <!--next-version-placeholder-->
 
+## v1.0.0 (2026-06-10)
+
+### New features
+
+These methods expose existing Clarity API v2 endpoints not previously wrapped by this package.
+
+- **`get_historical_measurements()`** — fetch data for arbitrary date ranges, returns a wide-format `pandas.DataFrame`
+  - Uses the async `POST /v2/report-requests` endpoint; polls until the report completes and downloads the result
+  - Both `start_time` and `end_time` are fully respected; rate limit is 30 reports/org/day
+- **`get_measurements_continuation()`** — stream new measurements without time-based race conditions
+  - Uses `POST /v2/recent-datasource-measurements-continuation`; returns `(data, new_token)` tuples for chained polling
+  - Seed a token via `get_recent_measurements(..., reply_with_continuation_token=True)`, then pass the returned token on each subsequent call to get only data that arrived since the last poll
+
+### Improvements
+
+- **`get_recent_measurements()`** redesigned with explicit named parameters (breaking change from pre-1.0 `data=` dict style)
+  - `datasource_ids` is now passed correctly as a list, fixing 400 errors on single-datasource queries
+  - Pre-1.0 callers passing `data={...}` still work but emit a `DeprecationWarning`; the `data` parameter will be removed in a future version
+- **Docstrings** updated for `get_recent_measurements()` (json-long return shape, lookback limits, `endTime` not supported) and `get_historical_measurements()` (wide-format return shape, rate limit now prominent)
+
+### Internal
+
+- `_get_report_status()` private helper added for debugging report request state
+
 ## v0.3.1 (2026-06-10)
 
 - Fixed packaging: `pandas` is now correctly declared as a runtime dependency; `pytest` moved to optional `dev` dependency group.
