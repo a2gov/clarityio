@@ -17,7 +17,9 @@ This package is stable and used in production at the City of Ann Arbor.
 
 ### Not yet implemented
 
-- All other endpoints.
+- Devices / nodes: `GET {baseUrl}/v2/devices/nodes` and per-node detail/status
+- Subscriptions: `GET {baseUrl}/v2/subscriptions`
+- Metrics dictionary and other reference endpoints
 
 
 ## Installation
@@ -68,6 +70,29 @@ response_wide = api_connection.get_recent_measurements(
     metric_select='only pm2_5ConcMass24HourRollingMean',  # see API docs for metric selection
 )
 df_wide = pd.read_csv(StringIO(response_wide))
+```
+
+### Stream new measurements with a continuation token
+
+To poll for new data without time-based race conditions, seed a continuation
+token and pass it back on each subsequent call. Each call returns only data that
+arrived since the previous one. Tokens are valid for 24 hours.
+
+```python
+import time
+
+# Seed a token from an initial recent-measurements call
+data, token = api_connection.get_recent_measurements(
+    datasource_ids=['A_DATA_SOURCE_ID'],
+    reply_with_continuation_token=True,
+)
+
+# On each poll, pass the latest token to get only new data
+while True:
+    time.sleep(60)
+    data, token = api_connection.get_measurements_continuation(token)
+    if data:
+        ...  # process new measurements
 ```
 
 ### Retrieve historical measurements

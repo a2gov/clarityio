@@ -6,6 +6,11 @@ import warnings
 import pandas as pd
 import requests
 
+# Default (connect, read) timeout in seconds for HTTP calls. The read timeout
+# is per-chunk inactivity, not total transfer time, so it is safe for large
+# report downloads. Without a timeout, a stalled connection hangs forever.
+_REQUEST_TIMEOUT = (10, 60)
+
 
 class ClarityAPIConnection:
     def __init__(self, api_key, org):
@@ -96,7 +101,9 @@ class ClarityAPIConnection:
             payload = copy.deepcopy(data)
             payload["org"] = self.org
             try:
-                response = requests.post(url, headers=self.headers, json=payload)
+                response = requests.post(
+                    url, headers=self.headers, json=payload, timeout=_REQUEST_TIMEOUT
+                )
                 response.raise_for_status()
             except requests.exceptions.HTTPError as err:
                 print(f"HTTP error occurred: {err}")
@@ -121,7 +128,9 @@ class ClarityAPIConnection:
             body["replyWithContinuationToken"] = True
 
         try:
-            response = requests.post(url, headers=self.headers, json=body)
+            response = requests.post(
+                url, headers=self.headers, json=body, timeout=_REQUEST_TIMEOUT
+            )
             response.raise_for_status()
         except requests.exceptions.HTTPError as err:
             print(f"HTTP error occurred: {err}")
@@ -165,7 +174,9 @@ class ClarityAPIConnection:
         url = f"{self.base_url}recent-datasource-measurements-continuation"
         body = {"org": self.org, "continuationToken": continuation_token}
         try:
-            response = requests.post(url, headers=self.headers, json=body)
+            response = requests.post(
+                url, headers=self.headers, json=body, timeout=_REQUEST_TIMEOUT
+            )
             response.raise_for_status()
         except requests.exceptions.HTTPError as err:
             print(f"HTTP error occurred: {err}")
@@ -242,7 +253,9 @@ class ClarityAPIConnection:
             body["metricSelect"] = metric_select
 
         try:
-            response = requests.post(url, headers=self.headers, json=body)
+            response = requests.post(
+                url, headers=self.headers, json=body, timeout=_REQUEST_TIMEOUT
+            )
             if response.status_code == 429:
                 print(
                     "Rate limit reached: 30 historical measurement reports per organization "
@@ -299,7 +312,9 @@ class ClarityAPIConnection:
         url = f"{self.base_url}report-requests/{report_id}"
         params = {"org": self.org}
         try:
-            response = requests.get(url, headers=self.headers, params=params)
+            response = requests.get(
+                url, headers=self.headers, params=params, timeout=_REQUEST_TIMEOUT
+            )
             response.raise_for_status()
             return response.json()
         except requests.exceptions.HTTPError as err:
@@ -313,7 +328,7 @@ class ClarityAPIConnection:
         frames = []
         for url in urls:
             try:
-                response = requests.get(url)
+                response = requests.get(url, timeout=_REQUEST_TIMEOUT)
                 response.raise_for_status()
                 if file_format in ("parquet", "parquet-wide"):
                     frames.append(pd.read_parquet(io.BytesIO(response.content)))
@@ -336,13 +351,17 @@ class ClarityAPIConnection:
         url = f"{self.base_url}datasources"
         params = {"org": self.org}
         try:
-            response = requests.get(url, headers=self.headers, params=params)
+            response = requests.get(
+                url, headers=self.headers, params=params, timeout=_REQUEST_TIMEOUT
+            )
             response.raise_for_status()
             return response.json()
         except requests.exceptions.HTTPError as err:
             print(f"HTTP error occurred: {err}")
+            return None
         except Exception as err:
             print(f"An error occurred: {err}")
+            return None
 
     def get_datasource_details(self, datasource_id):
         """Fetch details for a specific datasource.
@@ -356,10 +375,14 @@ class ClarityAPIConnection:
         url = f"{self.base_url}datasources/{datasource_id}"
         params = {"org": self.org}
         try:
-            response = requests.get(url, headers=self.headers, params=params)
+            response = requests.get(
+                url, headers=self.headers, params=params, timeout=_REQUEST_TIMEOUT
+            )
             response.raise_for_status()
             return response.json()
         except requests.exceptions.HTTPError as err:
             print(f"HTTP error occurred: {err}")
+            return None
         except Exception as err:
             print(f"An error occurred: {err}")
+            return None

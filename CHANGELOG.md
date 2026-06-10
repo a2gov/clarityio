@@ -2,6 +2,19 @@
 
 <!--next-version-placeholder-->
 
+## NEXT
+
+### Improvements
+
+- All HTTP requests now use a connect/read timeout, so a stalled connection
+  fails instead of hanging indefinitely.
+
+### Internal
+
+- `get_datasources()` / `get_datasource_details()` now return `None` explicitly
+  on error (previously relied on an implicit `None`); no behavior change.
+- Added `__all__` to the package namespace.
+
 ## v1.0.0 (2026-06-10)
 
 ### New features
