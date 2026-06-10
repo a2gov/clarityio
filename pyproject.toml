@@ -1,6 +1,6 @@
 [project]
 name = "clarityio"
-version = "0.3.0"
+version = "0.3.1"
 description = "Retrieve air quality data from the Clarity.io API"
 authors = [
   { name="Sam Firke", email="samuel.firke@gmail.com" },
@@ -14,8 +14,11 @@ classifiers = [
 ]
 dependencies = [
   "requests>=2.0.0",
-  "pytest>=6.0.0",
+  "pandas>=1.0.0",
 ]
+
+[project.optional-dependencies]
+dev = ["pytest>=6.0.0", "twine>=5.0.0"]
 
 [tool.pytest.ini_options]
 pythonpath = [
@@ -29,8 +32,3 @@ Issues = "https://github.com/a2gov/clarityio/issues"
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
-
-[tool.hatch.envs.test]
-dependencies = [
-  "pytest>=6.0.0",
-]

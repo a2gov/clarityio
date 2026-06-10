@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v0.3.1 (2026-06-10)
+
+- Fixed packaging: `pandas` is now correctly declared as a runtime dependency; `pytest` moved to optional `dev` dependency group.
+
 ## v0.3.0 (2024-08-26)
 
 - `scale_raw_to_aqi()` function converts raw pollutant measurements to EPA AQI values.  Cutoff values come from https://www.airnow.gov/sites/default/files/2020-05/aqi-technical-assistance-document-sept2018.pdf,
