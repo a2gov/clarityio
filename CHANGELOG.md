@@ -2,6 +2,13 @@
 
 <!--next-version-placeholder-->
 
+## v1.0.1 (2026-06-10)
+
+- `get_recent_measurements()` now accepts the deprecated `data=` dict parameter from pre-1.0 callers, emitting a `DeprecationWarning` and preserving the old behavior. Migrate by replacing `data={...}` with equivalent keyword arguments; the `data` parameter will be removed in a future version.
+- `get_recent_measurements()` docstring now documents the json-long return shape (`dict` → `'data'` key → list of `{datasourceId, time, metric, value, raw}` records) and explicitly notes that it differs from `get_historical_measurements()`'s wide-format DataFrame.
+- `get_historical_measurements()` docstring now documents the wide-format return shape (`startOfPeriod` timestamp column, `{metric}.value` / `{metric}.raw` columns) and surfaces the 30-reports/day rate limit prominently rather than only in the 429 handler.
+- `get_historical_measurements()` default `poll_interval` reduced from 30s to 15s. First poll now fires after `min(10, poll_interval)` seconds, so small single-station reports typically return in ~10s instead of waiting a full interval.
+
 ## v1.0.0 (2026-06-10)
 
 - `get_historical_measurements()` — new method for arbitrary date ranges via the async `POST /v2/report-requests` endpoint. Accepts `start_time` and `end_time`, polls until the report completes, downloads the result, and returns a `pandas.DataFrame`. Both time bounds are fully respected. Rate limit is 30 reports/org/day.

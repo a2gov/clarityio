@@ -104,6 +104,35 @@ def test_get_recent_http_error_returns_none_tuple_with_token(mock_post, conn):
     assert result == (None, None)
 
 
+@patch("clarityio.clarityio.requests.post")
+def test_get_recent_deprecated_data_param(mock_post, conn):
+    mock_post.return_value = _mock_post({"data": []})
+    with pytest.warns(DeprecationWarning, match="data.*deprecated"):
+        result = conn.get_recent_measurements(
+            data={"allDatasources": True, "outputFrequency": "hour", "format": "json-long"}
+        )
+    assert result == {"data": []}
+    body = mock_post.call_args[1]["json"]
+    assert body["org"] == "test-org"
+    assert body["allDatasources"] is True
+
+
+@patch("clarityio.clarityio.requests.post")
+def test_get_recent_deprecated_data_param_csv(mock_post, conn):
+    mock_post.return_value = _mock_post(status_code=200)
+    with pytest.warns(DeprecationWarning):
+        result = conn.get_recent_measurements(data={"format": "csv-wide"})
+    assert result == "csv,data"
+
+
+@patch("clarityio.clarityio.requests.post")
+def test_get_recent_deprecated_data_param_error(mock_post, conn):
+    mock_post.return_value = _mock_post(status_code=500)
+    with pytest.warns(DeprecationWarning):
+        result = conn.get_recent_measurements(data={"allDatasources": True})
+    assert result is None
+
+
 # ---------------------------------------------------------------------------
 # get_measurements_continuation
 # ---------------------------------------------------------------------------

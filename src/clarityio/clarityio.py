@@ -1,5 +1,7 @@
+import copy
 import io
 import time
+import warnings
 
 import pandas as pd
 import requests
@@ -40,6 +42,7 @@ class ClarityAPIConnection:
         qc_assessment=False,
         qc_flags=False,
         reply_with_continuation_token=False,
+        data=None,
     ):
         """Retrieve recent measurements from the Clarity.io API.
 
@@ -53,6 +56,13 @@ class ClarityAPIConnection:
         endTime is NOT supported by this endpoint. For bounded time windows or
         data older than the limits above, use get_historical_measurements().
 
+        NOTE on return shapes: this method and get_historical_measurements() return
+        data in different shapes. This method's json-long format is a dict with a
+        'data' key containing records like {datasourceId, time, metric, value, raw}.
+        get_historical_measurements() returns a wide-format DataFrame where the time
+        column is 'startOfPeriod' and metric columns are named '{metric}.value'.
+        There is currently no shared transform pipeline between the two.
+
         Args:
             datasource_ids: List of datasource ID strings. Mutually exclusive with
                 all_datasources. Defaults to all datasources if omitted.
@@ -65,11 +75,37 @@ class ClarityAPIConnection:
             qc_flags: Include QC flags field in metrics.
             reply_with_continuation_token: If True, returns (data, token) tuple
                 for use with get_measurements_continuation().
+            data: Deprecated. Pass a raw request-body dict directly, matching
+                the pre-1.0 interface. Use explicit keyword arguments instead.
 
         Returns:
-            dict (json-long format), str (csv-wide format), or None on error.
+            json-long: dict with 'data' key — list of {datasourceId, time (UTC ISO
+                8601), metric (canonical name), value (calibrated), raw} records.
+            csv-wide: raw CSV string.
+            None on error.
             If reply_with_continuation_token=True, returns (data, token_str | None).
         """
+        if data is not None:
+            warnings.warn(
+                "The 'data' parameter is deprecated and will be removed in a future version. "
+                "Pass individual keyword arguments instead (datasource_ids, start_time, etc.).",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            url = f"{self.base_url}recent-datasource-measurements-query"
+            payload = copy.deepcopy(data)
+            payload["org"] = self.org
+            try:
+                response = requests.post(url, headers=self.headers, json=payload)
+                response.raise_for_status()
+            except requests.exceptions.HTTPError as err:
+                print(f"HTTP error occurred: {err}")
+                return None
+            except Exception as err:
+                print(f"An error occurred: {err}")
+                return None
+            return response.text if payload.get("format") == "csv-wide" else response.json()
+
         url = f"{self.base_url}recent-datasource-measurements-query"
         body = {"org": self.org, "outputFrequency": output_frequency, "format": format}
         body.update(self._resolve_datasource_params(datasource_ids, all_datasources))
@@ -95,10 +131,10 @@ class ClarityAPIConnection:
             return (None, None) if reply_with_continuation_token else None
 
         token = response.headers.get("x-clarity-continuation-token")
-        data = response.text if format == "csv-wide" else response.json()
+        result = response.text if format == "csv-wide" else response.json()
         if reply_with_continuation_token:
-            return (data, token)
-        return data
+            return (result, token)
+        return result
 
     def get_measurements_continuation(self, continuation_token):
         """Poll for new measurements using a continuation token.
@@ -139,16 +175,26 @@ class ClarityAPIConnection:
         metric_select=None,
         file_format="csv",
         metric_label_style="canonical",
-        poll_interval=30,
+        poll_interval=15,
         timeout=600,
     ):
         """Retrieve historical measurements for an arbitrary date range.
 
         Wraps the asynchronous POST /v2/report-requests endpoint. Submits a
         report, polls until completion, downloads result file(s), and returns a
-        single concatenated DataFrame. endTime is fully respected.
+        single concatenated DataFrame. Both startTime and endTime are fully
+        respected; there is no lookback cap.
 
-        Rate limit: 30 reports per organization per day (resets at UTC midnight).
+        RATE LIMIT: 30 reports per organization per day, resetting at UTC
+        midnight. This limit is shared across all callers in the org. Plan
+        accordingly before running backfills or automated pipelines.
+
+        NOTE on return shape: returns a wide-format DataFrame, which differs
+        from get_recent_measurements()'s json-long format. One row per
+        (datasource, time-period). The timestamp column is named 'startOfPeriod'.
+        Metric value columns follow the pattern '{metricName}.value' (e.g.
+        'pm2_5ConcMass1HourMean.value'), with a paired '{metricName}.raw' where
+        the sensor provides a raw reading alongside the calibrated value.
 
         Args:
             start_time: Required. ISO 8601 string or datetime. Inclusive lower bound.
@@ -160,11 +206,14 @@ class ClarityAPIConnection:
             metric_select: Optional metric filter string.
             file_format: 'csv' (default), 'csv-wide', 'parquet', or 'parquet-wide'.
             metric_label_style: 'canonical' (default), 'english', or 'legacy'.
-            poll_interval: Seconds between status checks. Default 30.
+            poll_interval: Seconds between status checks after the first poll.
+                Default 15. First poll always occurs after min(10, poll_interval)
+                seconds to handle fast reports without unnecessary waiting.
             timeout: Max seconds to wait for report completion. Default 600.
 
         Returns:
-            pandas.DataFrame, or None on error or timeout.
+            pandas.DataFrame in wide format (see shape note above), or None on
+            error, rate-limit (429), or timeout.
         """
         url = f"{self.base_url}report-requests"
         body = {
@@ -203,9 +252,11 @@ class ClarityAPIConnection:
 
         print(f"Report submitted (id: {report_id}). Polling for completion...")
         elapsed = 0
+        wait = min(10, poll_interval)  # first poll is short; subsequent polls use poll_interval
         while elapsed < timeout:
-            time.sleep(poll_interval)
-            elapsed += poll_interval
+            time.sleep(wait)
+            elapsed += wait
+            wait = poll_interval
             status = self._get_report_status(report_id)
             if status is None:
                 return None
