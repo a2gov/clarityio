@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Architecture
 
-**clarityio** is a Python library wrapping the [Clarity.io](https://clarity.io) API v2 for retrieving air quality sensor data. Used in production at the City of Ann Arbor.
+**clarityio** is a Python library wrapping the [Clarity.io](https://clarity.io) API v2 for retrieving air quality sensor data. The API docs are https://api-guide.clarity.io/index.html.
 
 - **`src/clarityio/clarityio.py`** — `ClarityAPIConnection` class. Authenticated via API key + mandatory `org` parameter on every call. Three methods map to API endpoints: `get_recent_measurements()` (POST), `get_datasources()` (GET), `get_datasource_details()` (GET). All methods catch exceptions and return `None` on failure rather than raising.
 
